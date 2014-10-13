@@ -1,0 +1,13 @@
+.annotation {
+  width: 2em;
+  height: 2em;
+  background-color: #ddd;
+}
+
+.annotation.relevant {
+  background-color: #dfd;
+}
+
+.annotation.not-relevant {
+  background-color: #fdd;
+}
