@@ -73,7 +73,10 @@ add_toolbar = ->
     status = $("<span>")
     div.append div
 
-    div.append $("<input>", {id: "session-name"}) 
+    div.append $("<input>", {
+        id: "session-name",
+        placeholder: "Session name",
+        })
 
     export_btn = $("<button>Export</button>")
     export_btn.click ->
@@ -94,6 +97,8 @@ generate_qrel = (on_done) ->
     accum = ""
     req = objectStore.openCursor()
     sess = $("#session-name").val()
+    if sess == ""
+        sess = "0"
     req.onsuccess = (ev) ->
         cursor = ev.target.result
         if cursor
