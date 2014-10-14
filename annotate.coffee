@@ -104,7 +104,7 @@ generate_qrel = (on_done) ->
         if cursor
             val = cursor.value
             rel = switch val.rel
-                when 'not-relevant' then -1
+                when 'not-relevant' then 0
                 when 'relevant' then 1
                 else null
             if rel
