@@ -31,7 +31,8 @@ set_annotation = (ev) ->
     el = $(this)
     ann_id = el.attr("data-ann-id")
     val = el.val()
-    $("input[data-ann-id=\"#{ann_id}\"][value=#{val}]").prop("checked", true)
+    for field_id in annotations[ann_id].fields {
+        $("##{field_id}[value=#{val}]").prop("checked", true)
 
     objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
     objectStore.put {
@@ -51,19 +52,20 @@ add_annotations = ->
                 item: el.data('item')
                 fields: []
             }
-        annotations[ann_id].fields.push i
 
         el.append($('<label>', {'for': "ann-\"#{ann_id}\"-not-relevant"}).html('-'))
         for _, state of states
             do (state) ->
+                id = "ann-#{ann_id}-#{i}"
                 opt = $("<input>", {
                     type: "radio",
-                    id: "ann-#{ann_id}-#{i}",
+                    'id': id,
                     name: "group-#{i}",
                     value: state,
                     'data-ann-id': ann_id,
                 })
                 opt.click set_annotation
+                annotations[ann_id].fields.push id
                 el.append opt
         el.append($('<label>', {'for': "ann-\"#{ann_id}\"-relevant"}).html('+'))
 
