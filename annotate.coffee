@@ -107,7 +107,7 @@ generate_qrel = (on_done) ->
                 when 'not-relevant' then 0
                 when 'relevant' then 1
                 else null
-            if rel
+            if rel isnt null
                 accum = accum + "#{val.query}\t#{sess}\t#{val.item}\t#{rel}\n"
             cursor.continue()
         else
