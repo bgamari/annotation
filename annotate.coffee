@@ -73,10 +73,14 @@ add_toolbar = ->
     status = $("<span>")
     div.append div
 
-    div.append $("<input>", {
+    sess = $("<input>", {
         id: "session-name",
         placeholder: "Session name",
         })
+    sess.change (ev) ->
+        sessionStorage.setItem("session-name", $(this).val())
+    sess.val(sessionStorage.getItem("session-name"))
+    div.append sess
 
     export_btn = $("<button>Export</button>")
     export_btn.click ->
