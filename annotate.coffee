@@ -40,7 +40,7 @@ states = ['not-relevant', 'none', 'relevant']
 
 set_annotation = (ev) ->
     el = $(this)
-    ann_id = el.attr("data-ann-id")
+    ann_id = parseInt(el.attr("data-ann-id"))
     val = el.val()
     for field_id in annotations[ann_id].fields
         $("##{field_id}[value=#{val}]").prop("checked", true)
