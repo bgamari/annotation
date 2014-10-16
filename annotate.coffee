@@ -3,6 +3,16 @@ window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndex
 DB_NAME = "laura-annotations"
 STORE_NAME = "annotations"
 
+
+String.prototype.hashCode = -> 
+  hash = 0
+  if this.length == 0
+      return hash
+  for chr in this
+    hash  = ((hash << 5) - hash) + chr
+    hash |= 0   # Convert to 32bit integer
+  return hash
+
 db = null
 req = window.indexedDB.open(DB_NAME, 4)
 req.onsuccess = (ev) ->
@@ -45,7 +55,7 @@ set_annotation = (ev) ->
 add_annotations = ->
     $(".annotation").each (i) -> 
         el = $(this)
-        ann_id = el.data('query') + el.data('item')
+        ann_id = (el.data('query') + el.data('item')).hashCode()
         if ann_id not in annotations
             annotations[ann_id] = {
                 query: el.data('query'),
@@ -53,10 +63,10 @@ add_annotations = ->
                 fields: []
             }
 
-        el.append($('<label>', {'for': "ann-\"#{ann_id}\"-not-relevant"}).html('-'))
+        el.append($('<label>', {'for': "ann-\"#{i}\"-not-relevant"}).html('-'))
         for _, state of states
             do (state) ->
-                id = "ann-#{ann_id}-#{i}"
+                id = "ann-#{i}-#{state}"
                 opt = $("<input>", {
                     type: "radio",
                     'id': id,
@@ -67,7 +77,7 @@ add_annotations = ->
                 opt.click set_annotation
                 annotations[ann_id].fields.push id
                 el.append opt
-        el.append($('<label>', {'for': "ann-\"#{ann_id}\"-relevant"}).html('+'))
+        el.append($('<label>', {'for': "ann-\"#{i}\"-relevant"}).html('+'))
 
  
 add_toolbar = ->
