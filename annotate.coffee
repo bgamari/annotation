@@ -8,7 +8,8 @@ String.prototype.hashCode = ->
   hash = 0
   if this.length == 0
       return hash
-  for chr in this
+  for _,i in this
+    chr = this.charCodeAt(i)
     hash  = ((hash << 5) - hash) + chr
     hash |= 0   # Convert to 32bit integer
   return hash
