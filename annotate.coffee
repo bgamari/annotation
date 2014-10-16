@@ -15,24 +15,6 @@ String.prototype.hashCode = ->
   return hash
 
 db = null
-req = window.indexedDB.open(DB_NAME, 4)
-req.onsuccess = (ev) ->
-    db = this.result
-
-    # Update annotations
-    $(".annotation").each (i) -> 
-        el = $(this)
-        ann_id = (el.data('query') + el.data('item')).hashCode()
-        objectStore = db.transaction([STORE_NAME], "readonly").objectStore(STORE_NAME)
-        req = objectStore.get(ann_id)
-        req.onsuccess = (ev) ->
-            if ev.target.result
-                rel = ev.target.result.rel
-                $("input[name=group-#{i}][value=#{rel}]").attr('checked', true)
-
-req.onupgradeneeded = (ev) ->
-    db = ev.target.result
-    db.createObjectStore(STORE_NAME, { keyPath: "ann_id" })
 
 # annotations[ann_id] = [element ids]
 annotations = {}
@@ -53,7 +35,7 @@ set_annotation = (ev) ->
         item: annotations[ann_id].item
     }
     req.onerror = (ev) -> console.log("Failed to set annotataion: "+req.error)
-    req.onsuccess = (ev) -> console.log("Set annotataion "+ann_id)
+    req.onsuccess = (ev) -> console.log("Set annotation "+ann_id+" to "+val)
         
 add_annotations = ->
     $(".annotation").each (i) -> 
@@ -104,7 +86,13 @@ add_toolbar = ->
 
     clear_btn = $("<button>Clear</button>")
     clear_btn.click ->
-        db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME).clear()
+        req = db
+            .transaction([STORE_NAME], "readwrite")
+            .objectStore(STORE_NAME)
+            .clear()
+        req.onsuccess = -> console.log("Clear successful")
+        req.onerror = -> console.log("Clear failed: "+req.error)
+
     div.append clear_btn
 
     $("body").prepend div
@@ -130,6 +118,27 @@ generate_qrel = (on_done) ->
         else
             on_done accum
 
+load_existing_annotations = ->
+    for ann_id,ann of annotations
+        do (ann_id, ann) -> 
+            ann_id = parseInt(ann_id)
+            objectStore = db.transaction([STORE_NAME], "readonly").objectStore(STORE_NAME)
+            req = objectStore.get(ann_id)
+            req.onsuccess = (ev) ->
+                if ev.target.result
+                    rel = ev.target.result.rel
+                    $("input[value=#{rel}]", ann.fields).attr('checked', true)
+
 $(document).ready ->
     add_toolbar()
     add_annotations()
+
+    req = window.indexedDB.open(DB_NAME, 4)
+    req.onsuccess = (ev) ->
+        db = this.result
+        load_existing_annotations()
+
+    req.onupgradeneeded = (ev) ->
+        db = ev.target.result
+        db.createObjectStore(STORE_NAME, { keyPath: "ann_id" })
+
