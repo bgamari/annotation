@@ -81,7 +81,9 @@ add_toolbar = ->
     export_btn.click ->
         generate_qrel (qrel) ->
             $("#qrel").remove()
-            $("#toolbar").after($("<pre>", {id: "qrel"}).html(qrel))
+            area = $("<textarea>", {id: "qrel"}).html(qrel)
+            area.css('width', '50em')
+            $("#toolbar").after area
     div.append export_btn
 
     clear_btn = $("<button>Clear</button>")
