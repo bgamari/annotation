@@ -42,8 +42,8 @@ set_annotation = (ev) ->
     el = $(this)
     ann_id = parseInt(el.attr("data-ann-id"))
     val = el.val()
-    for field_id in annotations[ann_id].fields
-        $("##{field_id}[value=#{val}]").prop("checked", true)
+    fields = annotations[ann_id].fields
+    $("input[value=#{val}]", $(fields)).prop("checked", true)
 
     objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
     req = objectStore.put {
@@ -59,7 +59,7 @@ add_annotations = ->
     $(".annotation").each (i) -> 
         el = $(this)
         ann_id = (el.data('query') + el.data('item')).hashCode()
-        if ann_id not in annotations
+        if not annotations[ann_id]
             annotations[ann_id] = {
                 query: el.data('query'),
                 item: el.data('item')
@@ -69,18 +69,16 @@ add_annotations = ->
         el.append($('<label>', {'for': "ann-\"#{i}\"-not-relevant"}).html('-'))
         for _, state of states
             do (state) ->
-                id = "ann-#{i}-#{state}"
                 opt = $("<input>", {
                     type: "radio",
-                    'id': id,
                     name: "group-#{i}",
                     value: state,
                     'data-ann-id': ann_id,
                 })
                 opt.click set_annotation
-                annotations[ann_id].fields.push id
                 el.append opt
         el.append($('<label>', {'for': "ann-\"#{i}\"-relevant"}).html('+'))
+        annotations[ann_id].fields.push el[0]
 
  
 add_toolbar = ->
