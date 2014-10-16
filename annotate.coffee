@@ -90,7 +90,9 @@ add_toolbar = ->
             .transaction([STORE_NAME], "readwrite")
             .objectStore(STORE_NAME)
             .clear()
-        req.onsuccess = -> console.log("Clear successful")
+        req.onsuccess = ->
+            console.log("Clear successful")
+            $("input").attr("checked", false)
         req.onerror = -> console.log("Clear failed: "+req.error)
 
     div.append clear_btn
