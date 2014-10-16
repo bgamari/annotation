@@ -64,7 +64,7 @@ add_annotations = ->
 
  
 add_toolbar = ->
-    div = $("<div>").addClass("toolbar")
+    div = $("<div>").attr('id', 'toolbar').addClass("toolbar")
     status = $("<span>")
     div.append div
 
@@ -81,7 +81,7 @@ add_toolbar = ->
     export_btn.click ->
         generate_qrel (qrel) ->
             $("#qrel").remove()
-            $("body").append($("<pre>", {id: "qrel"}).html(qrel))
+            $("#toolbar").after($("<pre>", {id: "qrel"}).html(qrel))
     div.append export_btn
 
     clear_btn = $("<button>Clear</button>")
