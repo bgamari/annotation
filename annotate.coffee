@@ -21,7 +21,7 @@ req.onsuccess = (ev) ->
     # Update annotations
     $(".annotation").each (i) -> 
         el = $(this)
-        ann_id = el.data('query') + el.data('item')
+        ann_id = (el.data('query') + el.data('item')).hashCode()
         objectStore = db.transaction([STORE_NAME], "readonly").objectStore(STORE_NAME)
         req = objectStore.get(ann_id)
         req.onsuccess = (ev) ->
