@@ -45,12 +45,13 @@ set_annotation = (ev) ->
         $("##{field_id}[value=#{val}]").prop("checked", true)
 
     objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
-    objectStore.put {
+    req = objectStore.put {
         'ann_id': ann_id,
         rel: val
         query: annotations[ann_id].query
         item: annotations[ann_id].item
     }
+    req.onerror = (ev) -> console.log("Failed to set annotataion: "+req.error)
         
 add_annotations = ->
     $(".annotation").each (i) -> 
