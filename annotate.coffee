@@ -53,6 +53,7 @@ set_annotation = (ev) ->
         item: annotations[ann_id].item
     }
     req.onerror = (ev) -> console.log("Failed to set annotataion: "+req.error)
+    req.onsuccess = (ev) -> console.log("Set annotataion "+ann_id)
         
 add_annotations = ->
     $(".annotation").each (i) -> 
