@@ -3,7 +3,7 @@ window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndex
 DB_NAME = "laura-annotations"
 STORE_NAME = "annotations"
 
-upload_url = "http://ben-server.local:3333/annotation"
+upload_url = "/annotation"
 
 
 String.prototype.hashCode = -> 
