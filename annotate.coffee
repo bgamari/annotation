@@ -66,7 +66,7 @@ add_annotations = ->
 add_toolbar = ->
     div = $("<div>").attr('id', 'toolbar').addClass("toolbar")
     status = $("<span>")
-    div.append div
+    div.append status
 
     sess = $("<input>", {
         id: "session-name",
