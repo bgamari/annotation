@@ -40,7 +40,7 @@ postAnnotation = do
     user <- lift $ T.unpack `fmap` param "user"
     when (null (user :: String)) $ left (status500, "expected user name")
     time <- liftIO getCurrentTime
-    let fname = destDir </> user<>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json>"
+    let fname = destDir </> user<>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json"
     payload <- lift annotationData
     liftIO $ BS.writeFile fname payload
     return ()
