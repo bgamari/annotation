@@ -16,9 +16,9 @@ import Network.HTTP.Types.Status
 import System.Directory
 import System.FilePath
 
-destDir = "/home/ben/annotation-server"
-
-staticDir = "/home/dietz/public_html/queripidia"
+-- Configuration
+destDir = "/home/dietz/annotations"
+staticDir = "/home/dietz/unpolished"
 
 main = do
     createDirectoryIfMissing True destDir
