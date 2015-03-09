@@ -3,6 +3,8 @@ window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndex
 DB_NAME = "laura-annotations"
 STORE_NAME = "annotations"
 
+upload_url = "http://ben-server.local:3333/annotation"
+
 
 String.prototype.hashCode = -> 
   hash = 0
@@ -78,13 +80,27 @@ add_toolbar = ->
     div.append sess
 
     export_btn = $("<button>Export</button>")
+    div.append export_btn
     export_btn.click ->
         generate_qrel (qrel) ->
             $("#qrel").remove()
             area = $("<textarea>", {id: "qrel"}).html(qrel)
             area.css('width', '50em')
             $("#toolbar").after area
-    div.append export_btn
+
+    upload_btn = $("<button>Upload</button>")
+    div.append upload_btn
+    upload_btn.click ->
+        generate_qrel (qrel) ->
+            passwd = window.prompt("Password?");
+            $.ajax(upload_url, {
+                type: "POST",
+                data: {
+                    "user": $("#session-name").val(),
+                    "password": passwd,
+                    "qrel": qrel,
+                },
+            });
 
     clear_btn = $("<button>Clear</button>")
     clear_btn.click ->
@@ -133,9 +149,26 @@ load_existing_annotations = ->
                     rel = ev.target.result.rel
                     $("input[value=#{rel}]", ann.fields).attr('checked', true)
 
+delay = (ms, func) -> setTimeout func, ms
+
+notify = (msg, klass) ->
+    el = $('<li>').html(msg)
+    el.addClass(klass)
+    $("#notifications").append el
+    delay 5000, () -> el.fadeOut()
+
 $(document).ready ->
     add_toolbar()
     add_annotations()
+
+    $("head").append $("<style>
+        #notifications { float: right; list-style: none; }
+        #notifications li { border-radius: 1em; margin: 1em; padding: 2em; }
+        #notifications li.fail { background-color: #fdd; }
+        #notifications li.success { background-color: #ded; }
+        </style>")
+    notifications = $('<ul id="notifications"></ul>')
+    notifications = $("body").prepend notifications
 
     req = window.indexedDB.open(DB_NAME, 4)
     req.onsuccess = (ev) ->
@@ -146,3 +179,5 @@ $(document).ready ->
         db = ev.target.result
         db.createObjectStore(STORE_NAME, { keyPath: "ann_id" })
 
+$(document).ajaxError (ev, resp) -> notify("annotation successfully saved", 'fail')
+$(document).ajaxSuccess (ev, resp) -> notify(resp.responseText, 'success')
