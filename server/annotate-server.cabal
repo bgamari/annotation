@@ -1,4 +1,4 @@
-name:                server
+name:                annotate-server
 version:             0.1.0.0
 synopsis:            Annotation server
 -- description:         
@@ -12,7 +12,7 @@ category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
 
-executable server
+executable annotate-server
   main-is:             Main.hs
   other-extensions:    OverloadedStrings
   build-depends:       base >=4.8 && <4.9,
