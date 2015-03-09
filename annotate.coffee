@@ -179,5 +179,5 @@ $(document).ready ->
         db = ev.target.result
         db.createObjectStore(STORE_NAME, { keyPath: "ann_id" })
 
-$(document).ajaxError (ev, resp) -> notify("annotation successfully saved", 'fail')
-$(document).ajaxSuccess (ev, resp) -> notify(resp.responseText, 'success')
+$(document).ajaxError (ev, resp) -> notify(resp.responseText, 'fail')
+$(document).ajaxSuccess (ev, resp) -> notify("annotation successfully saved", 'success')
