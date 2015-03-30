@@ -28,7 +28,7 @@ main = do
             case res of
                 Left (s, msg) -> text msg >> status s
                 Right ()      -> status ok200
-        get "/" $ redirect "/index.html"
+        get "/" $ file (staticDir </> "/index.html")
         get (regex "/(.+)$") $ do
             path <- T.unpack <$> param "1"
             liftIO $ putStrLn path
