@@ -22,9 +22,20 @@ db = null
 annotations = {}
 states = ['not-relevant', 'none', 'relevant']
 
+parse_options = (str) ->
+    if str == undefined
+        return {'not-relevant': 0, 'none': null, 'relevant': 1}
+    opts = {}
+    for _,i in str.split(',')
+        [k,v] = s.split('=')
+        opts[k] = v
+    return opts
+
+
 set_annotation = (ev) ->
     el = $(this)
     ann_id = parseInt(el.attr("data-ann-id"))
+    options = parse_options(el.attr("data-ann-options"))
     val = el.val()
     fields = annotations[ann_id].fields
     $("input[value=#{val}]", $(fields)).prop("checked", true)
@@ -43,6 +54,7 @@ add_annotations = ->
     $(".annotation").each (i) ->
         el = $(this)
         ann_id = (el.data('query') + el.data('item')).hashCode()
+        options = parse_options(el.attr("data-ann-options"))
         if not annotations[ann_id]
             annotations[ann_id] = {
                 query: el.data('query'),
@@ -51,12 +63,12 @@ add_annotations = ->
             }
 
         el.append($('<label>', {'for': "ann-\"#{i}\"-not-relevant"}).html('-'))
-        for _, state of states
-            do (state) ->
+        for k, v of options
+            do (k, v) ->
                 opt = $("<input>", {
                     type: "radio",
                     name: "group-#{i}",
-                    value: state,
+                    value: k,
                     'data-ann-id': ann_id,
                 })
                 opt.click set_annotation
