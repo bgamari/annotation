@@ -6,7 +6,7 @@ STORE_NAME = "annotations"
 upload_url = "/annotation"
 
 
-String.prototype.hashCode = -> 
+String.prototype.hashCode = ->
   hash = 0
   if this.length == 0
       return hash
@@ -38,9 +38,9 @@ set_annotation = (ev) ->
     }
     req.onerror = (ev) -> console.log("Failed to set annotataion: "+req.error)
     req.onsuccess = (ev) -> console.log("Set annotation "+ann_id+" to "+val)
-        
+
 add_annotations = ->
-    $(".annotation").each (i) -> 
+    $(".annotation").each (i) ->
         el = $(this)
         ann_id = (el.data('query') + el.data('item')).hashCode()
         if not annotations[ann_id]
@@ -64,7 +64,7 @@ add_annotations = ->
         el.append($('<label>', {'for': "ann-\"#{i}\"-relevant"}).html('+'))
         annotations[ann_id].fields.push el[0]
 
- 
+
 add_toolbar = ->
     div = $("<div>").attr('id', 'toolbar').addClass("toolbar")
     status = $("<span>")
@@ -140,7 +140,7 @@ generate_qrel = (on_done) ->
 
 load_existing_annotations = ->
     for ann_id,ann of annotations
-        do (ann_id, ann) -> 
+        do (ann_id, ann) ->
             ann_id = parseInt(ann_id)
             objectStore = db.transaction([STORE_NAME], "readonly").objectStore(STORE_NAME)
             req = objectStore.get(ann_id)
