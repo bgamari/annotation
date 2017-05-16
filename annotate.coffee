@@ -20,31 +20,36 @@ db = null
 
 # annotations[ann_id] = [element ids]
 annotations = {}
-states = ['not-relevant', 'none', 'relevant']
 
 parse_options = (str) ->
     if str == undefined
-        return {'not-relevant': 0, 'none': null, 'relevant': 1}
+        #return [[['none', null]], [['not-relevant', 0], ['relevant', 1]]]
+        return [[['Perfect', 5], ['Must', 4], ['Should', 3], ['Can', 2]],
+                [['No', 0], ['<span class="glyphicon glyphicon-trash">', -2]],
+                [['<span class="glyphicon glyphicon-erase">', null]]]
+
     opts = {}
-    for _,i in str.split(',')
-        [k,v] = s.split('=')
-        opts[k] = v
+    for _,s in str.split(';')
+        group = []
+        for _,i in s.split(',')
+            [k,v] = s.split('=')
+            group.push([k,v])
     return opts
 
 
 set_annotation = (ev) ->
     el = $(this)
-    ann_id = parseInt(el.attr("data-ann-id"))
-    options = parse_options(el.attr("data-ann-options"))
-    val = el.val()
-    fields = annotations[ann_id].fields
-    $("input[value=#{val}]", $(fields)).prop("checked", true)
+    ann_id = parseInt(el.closest('.annotate').attr("data-ann-id"))
+    val = el.attr("data-value")
+    toolbar = annotations[ann_id].toolbar
+    $("button", $(toolbar)).removeClass("active")
+    $("button[data-value=#{val}]", $(toolbar)).addClass("active")
 
     objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
     req = objectStore.put {
-        'ann_id': ann_id,
-        rel: val
-        query: annotations[ann_id].query
+        ann_id: ann_id,
+        rel: val,
+        query: annotations[ann_id].query,
         item: annotations[ann_id].item
     }
     req.onerror = (ev) -> console.log("Failed to set annotataion: "+req.error)
@@ -55,26 +60,30 @@ add_annotations = ->
         el = $(this)
         ann_id = (el.data('query') + el.data('item')).hashCode()
         options = parse_options(el.attr("data-ann-options"))
-        if not annotations[ann_id]
-            annotations[ann_id] = {
-                query: el.data('query'),
-                item: el.data('item')
-                fields: []
-            }
 
-        el.append($('<label>', {'for': "ann-\"#{i}\"-not-relevant"}).html('-'))
-        for k, v of options
-            do (k, v) ->
-                opt = $("<input>", {
-                    type: "radio",
-                    name: "group-#{i}",
-                    value: k,
-                    'data-ann-id': ann_id,
-                })
-                opt.click set_annotation
-                el.append opt
-        el.append($('<label>', {'for': "ann-\"#{i}\"-relevant"}).html('+'))
-        annotations[ann_id].fields.push el[0]
+        toolbar = $("<div>")
+                  .addClass('btn-toolbar annotate')
+                  .attr('role', 'toolbar')
+                  .attr("data-ann-id", ann_id)
+
+        for _, group_opts of options
+            group = $("<div class='btn-group' role='toolbar'>")
+            toolbar.append(group)
+            for _, [name, val] of group_opts
+                do (name, val) ->
+                    opt = $("<button>")
+                          .addClass("btn btn-sm")
+                          .attr("data-value", val)
+                          .html(name)
+                    opt.click set_annotation
+                    group.append opt
+
+        el.append(toolbar)
+        annotations[ann_id] = {
+            query: el.data('query'),
+            item: el.data('item'),
+            toolbar: toolbar
+        }
 
 
 add_toolbar = ->
@@ -140,10 +149,7 @@ generate_qrel = (on_done) ->
         cursor = ev.target.result
         if cursor
             val = cursor.value
-            rel = switch val.rel
-                when 'not-relevant' then 0
-                when 'relevant' then 1
-                else null
+            rel = val.rel
             if rel isnt null
                 accum = accum + "#{val.query}\t#{sess}\t#{val.item}\t#{rel}\n"
             cursor.continue()
@@ -158,8 +164,8 @@ load_existing_annotations = ->
             req = objectStore.get(ann_id)
             req.onsuccess = (ev) ->
                 if ev.target.result
-                    rel = ev.target.result.rel
-                    $("input[value=#{rel}]", ann.fields).attr('checked', true)
+                    val = ev.target.result.rel
+                    $("button[data-value=#{val}]", ann.toolbar).addClass('active')
 
 delay = (ms, func) -> setTimeout func, ms
 
