@@ -46,12 +46,15 @@ set_annotation = (ev) ->
     $("button[data-value=#{val}]", $(toolbar)).addClass("active")
 
     objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
-    req = objectStore.put {
-        ann_id: ann_id,
-        rel: val,
-        query: annotations[ann_id].query,
-        item: annotations[ann_id].item
-    }
+    if val == undefined
+        req = objectStore.put {
+            ann_id: ann_id,
+            rel: val,
+            query: annotations[ann_id].query,
+            item: annotations[ann_id].item
+        }
+    else:
+        req = objectStore.delete(ann_id)
     req.onerror = (ev) -> console.log("Failed to set annotataion: "+req.error)
     req.onsuccess = (ev) -> console.log("Set annotation "+ann_id+" to "+val)
 
