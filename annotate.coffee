@@ -47,14 +47,14 @@ set_annotation = (ev) ->
 
     objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
     if val == undefined
+        req = objectStore.delete(ann_id)
+    else
         req = objectStore.put {
             ann_id: ann_id,
             rel: val,
             query: annotations[ann_id].query,
             item: annotations[ann_id].item
         }
-    else:
-        req = objectStore.delete(ann_id)
     req.onerror = (ev) -> console.log("Failed to set annotataion: "+req.error)
     req.onsuccess = (ev) -> console.log("Set annotation "+ann_id+" to "+val)
 
@@ -134,7 +134,7 @@ add_toolbar = ->
             .clear()
         req.onsuccess = ->
             console.log("Clear successful")
-            $("input").attr("checked", false)
+            $(".annotation button").removeClass('active')
         req.onerror = -> console.log("Clear failed: "+req.error)
 
     div.append clear_btn
