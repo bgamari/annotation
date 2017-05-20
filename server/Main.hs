@@ -52,9 +52,13 @@ main = do
                 Right ()      -> status ok200
         get "/" $ file (staticDir </> "index.html")
         get (regex "/(.+)$") $ do
-            path <- T.unpack <$> param "1"
-            liftIO $ putStrLn path
-            file (staticDir </> path)
+            path <- param "1"
+            isDir <- liftIO $ doesDirectoryExist path
+            liftIO $ putStrLn $ path <> " isDir?" <> show isDir
+            if isDir
+              then file (staticDir </> path </> "index.html")
+              else file (staticDir </> path)
+
 
 postAnnotation :: FilePath -> ExceptT (Status, T.Text) ActionM ()
 postAnnotation destDir = do
