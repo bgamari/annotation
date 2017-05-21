@@ -83,9 +83,10 @@ postAnnotation destDir = do
     let session = escapeURIString isAllowedInURI session'
     when (null (session :: String)) $ throwE (status500, "expected session name")
     time <- liftIO getCurrentTime
-    Just credentialUsername <- lift $ header "Authorization"
+    Just authorization <- lift $ header "Authorization"
+    let Just (username, _) = extractBasicAuth $ BS.pack $ T.unpack authorization
 
-    let fname = destDir </> T.unpack credentialUsername <>"-"<>session<>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json"
+    let fname = destDir </> T.unpack authorization <>"-"<>session<>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json"
     payload <- lift annotationData
     liftIO $ BSL.writeFile fname payload
     return ()
