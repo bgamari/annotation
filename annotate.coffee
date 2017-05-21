@@ -116,12 +116,10 @@ add_toolbar = ->
     div.append upload_btn
     upload_btn.click ->
         generate_qrel (qrel) ->
-            passwd = window.prompt("Password?");
             $.ajax(upload_url, {
                 type: "POST",
                 data: {
-                    "user": $("#session-name").val(),
-                    "password": passwd,
+                    "session": $("#session-name").val(),
                     "qrel": qrel,
                 },
             });

@@ -3,7 +3,7 @@
 import Data.Time.Clock
 import Data.Time.Format
 import Control.Applicative
-import Control.Monad (when)
+import Control.Monad (when, unless)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Except
@@ -17,7 +17,7 @@ import Network.Wai.Middleware.HttpAuth
 import Network.HTTP.Types.Status
 import System.Directory
 import System.FilePath
-import Options.Applicative
+import Options.Applicative hiding (header)
 
 options :: Parser (FilePath, FilePath, Int, Maybe FilePath)
 options =
@@ -41,7 +41,8 @@ checkCreds credsFile username password = do
 
 main :: IO ()
 main = do
-    (destDir, staticDir, port, credFile) <- execParser $ info options mempty
+    (destDir, staticDirUnnorm, port, credFile) <- execParser $ info options mempty
+    staticDir <- canonicalizePath staticDirUnnorm
     createDirectoryIfMissing True destDir
     scotty port $ do
         mapM_ (middleware . flip basicAuth authSettings . checkCreds) credFile
@@ -55,20 +56,32 @@ main = do
            path <- param "1"
            file (staticDir </> path </> "index.html")
         get (regex "/(.+)$") $ do
-            path <- param "1"
+            pathUnnorm <- param "1"
+            path <- liftIO $ canonicalizePath $ staticDir </> pathUnnorm
+            unless (isChild staticDir path) $ status badRequest400
             isDir <- liftIO $ doesDirectoryExist path
             liftIO $ putStrLn $ path <> " isDir?" <> show isDir
             if isDir
-              then redirect $ T.pack (staticDir </> path <> "/bg")
+              then redirect $ T.pack (staticDir </> path <> "/")
               else file (staticDir </> path)
 
+-- | Determine whether one canonical path is a child of another.
+isChild :: FilePath -> FilePath -> Bool
+isChild = \parent child -> go (splitPath parent) (splitPath child)
+  where
+    go (x:xs) (y:ys)
+      | x==y = go xs ys
+    go [] _  = True
+    go _  _  = False
 
 postAnnotation :: FilePath -> ExceptT (Status, T.Text) ActionM ()
 postAnnotation destDir = do
-    user <- lift $ T.unpack `fmap` param "user"
-    when (null (user :: String)) $ throwE (status500, "expected user name")
+    session <- lift $ T.unpack `fmap` param "session"
+    when (null (session :: String)) $ throwE (status500, "expected session name")
     time <- liftIO getCurrentTime
-    let fname = destDir </> user<>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json"
+    Just credentialUsername <- lift $ header "Authorization"
+
+    let fname = destDir </> T.unpack credentialUsername <>"-"<>session<>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json"
     payload <- lift annotationData
     liftIO $ BSL.writeFile fname payload
     return ()
