@@ -15,6 +15,7 @@ import qualified Data.ByteString.Lazy as BSL
 import Web.Scotty hiding (options)
 import Network.Wai.Middleware.HttpAuth
 import Network.HTTP.Types.Status
+import Network.URI
 import System.Directory
 import System.FilePath
 import Options.Applicative hiding (header)
@@ -74,9 +75,12 @@ isChild = \parent child -> go (splitPath parent) (splitPath child)
     go [] _  = True
     go _  _  = False
 
+
+
 postAnnotation :: FilePath -> ExceptT (Status, T.Text) ActionM ()
 postAnnotation destDir = do
-    session <- lift $ T.unpack `fmap` param "session"
+    session' <- lift $ T.unpack `fmap` param "session"
+    let session = escapeURIString isAllowedInURI session'
     when (null (session :: String)) $ throwE (status500, "expected session name")
     time <- liftIO getCurrentTime
     Just credentialUsername <- lift $ header "Authorization"
