@@ -96,7 +96,7 @@ isChild = \parent child -> go (splitPath parent) (splitPath child)
 postAnnotation :: FilePath -> ExceptT (Status, T.Text) ActionM ()
 postAnnotation destDir = do
     session' <- lift $ T.unpack `fmap` param "session"
-    let session = escapeURIString isAllowedInURI session'
+    let session = escapeURIString isUnreserved session'
     when (null (session :: String)) $ throwE (status500, "expected session name")
     time <- liftIO getCurrentTime
     Just authorization <- lift $ header "Authorization"
@@ -115,7 +115,7 @@ createDirListing :: FilePath -> [FilePath] -> H.Html
 createDirListing currentDir fileList = H.docTypeHtml $ do
     let fileLink filename =
             H.li $ H.a ! HA.href url $ H.toHtml filename
-          where url = H.stringValue $ escapeURIString isAllowedInURI filename
+          where url = H.stringValue $ escapeURIString isUnreserved filename
 
     H.head $ do
         H.meta ! HA.charset "utf-8"
