@@ -86,7 +86,7 @@ postAnnotation destDir = do
     Just authorization <- lift $ header "Authorization"
     let Just (username, _) = extractBasicAuth $ BS.pack $ T.unpack authorization
 
-    let fname = destDir </> T.unpack authorization <>"-"<>session<>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json"
+    let fname = destDir </> BS.unpack username <>"-"<>session<>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json"
     payload <- lift annotationData
     liftIO $ BSL.writeFile fname payload
     return ()
