@@ -18,7 +18,14 @@ import Network.HTTP.Types.Status
 import Network.URI
 import System.Directory
 import System.FilePath
+import System.Directory
 import Options.Applicative hiding (header)
+
+import qualified Text.Blaze.Html.Renderer.Text as H
+import qualified Text.Blaze.Html5 as H
+import qualified Text.Blaze.Html5.Attributes as HA
+import           Text.Blaze.Html5 ((!))
+
 
 options :: Parser (FilePath, FilePath, Int, Maybe FilePath)
 options =
@@ -52,10 +59,11 @@ main = do
             case res of
                 Left (s, msg) -> text msg >> status s
                 Right ()      -> status ok200
-        get "/" $ file (staticDir </> "index.html")
+        get "/" $
+            pathForward staticDir ""
         get (regex "/(.+)/$") $ do
-           path <- param "1"
-           file (staticDir </> path </> "index.html")
+           pathUnnorm <- param "1"
+           pathForward staticDir pathUnnorm
         get (regex "/(.+)$") $ do
             pathUnnorm <- param "1"
             path <- liftIO $ canonicalizePath $ staticDir </> pathUnnorm
@@ -63,9 +71,17 @@ main = do
             isDir <- liftIO $ doesDirectoryExist path
             liftIO $ putStrLn $ path <> " isDir?" <> show isDir
             if isDir
-              then redirect $ T.pack (staticDir </> path <> "/")
-              else file (staticDir </> path)
+              then redirect $ T.pack ("/" <> pathUnnorm <> "/")
+              else file path
 
+      where pathForward staticDir pathUnnorm = do
+               path <- liftIO $ canonicalizePath $ staticDir </> pathUnnorm
+               existFile <- liftIO $ doesFileExist (path </> "index.html")
+               if existFile then
+                  file (path </> "index.html")
+               else do
+                  directoryContents <- liftIO $ getDirectoryContents path
+                  html $ H.renderHtml $ createDirListing pathUnnorm directoryContents
 -- | Determine whether one canonical path is a child of another.
 isChild :: FilePath -> FilePath -> Bool
 isChild = \parent child -> go (splitPath parent) (splitPath child)
@@ -93,3 +109,19 @@ postAnnotation destDir = do
 
 annotationData :: ActionM BSL.ByteString
 annotationData = param "qrel"
+
+
+createDirListing :: FilePath -> [FilePath] -> H.Html
+createDirListing currentDir fileList = H.docTypeHtml $ do
+    let fileLink filename =
+            H.li $ H.a ! HA.href url $ H.toHtml filename
+          where url = H.stringValue $ escapeURIString isAllowedInURI filename
+
+    H.head $ do
+        H.meta ! HA.charset "utf-8"
+        H.title $ "Directory "<> H.toHtml currentDir
+    H.body $ do
+        H.h1 $ "Directory "<> H.toHtml currentDir
+        H.ul $
+          mapM_ fileLink fileList
+
