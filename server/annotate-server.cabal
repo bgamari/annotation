@@ -22,6 +22,7 @@ executable annotate-server
                        text >=1.2 && <1.3,
                        bytestring >=0.10 && <0.11,
                        scotty >=0.9 && <0.12,
+                       wai,
                        wai-extra,
                        http-types >=0.8 && <0.10,
                        directory >=1.2 && <1.3,

@@ -9,11 +9,14 @@ import Control.Monad.Trans.Class
 import Control.Monad.Trans.Except
 import Data.Monoid
 import qualified Data.Aeson as Aeson
-import qualified Data.Text.Lazy as T
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as BSL
 import Web.Scotty hiding (options)
 import Network.Wai.Middleware.HttpAuth
+import Network.Wai
 import Network.HTTP.Types.Status
 import Network.URI
 import System.Directory
@@ -60,22 +63,28 @@ main = do
             case res of
                 Left (s, msg) -> text msg >> status s
                 Right ()      -> status ok200
+
         get "/" $ do -- case 2
             liftIO $ putStrLn "case 2 GET /"
             pathForward staticDir ""
-        get (regex "/(.+)/$") $ do  -- case 3
-           pathUnnorm <- param "1"
+
+        get (function $ \req -> let path = rawPathInfo req
+                                in if "/" `BS.isSuffixOf` path
+                                   then Just []
+                                   else Nothing) $ do
+           pathUnnorm <- drop 1 . T.unpack . TE.decodeUtf8 . rawPathInfo <$> request
            liftIO $ putStrLn $ "case 3 pathUnnorm = "<> pathUnnorm
            pathForward staticDir pathUnnorm
-        get (regex "/(.+)$") $ do  -- case 4
-            pathUnnorm <- param "1"
+
+        get (function $ const $ Just []) $ do
+            pathUnnorm <- drop 1 . T.unpack . TE.decodeUtf8 . rawPathInfo <$> request
             liftIO $ putStrLn $ "case 4 pathUnnorm="<> pathUnnorm
             path <- liftIO $ canonicalizePath $ staticDir </> pathUnnorm
             unless (isChild staticDir path) $ status badRequest400
             isDir <- liftIO $ doesDirectoryExist path
             liftIO $ putStrLn $ path <> " isDir?" <> show isDir
             if isDir
-              then redirect $ T.pack ("/" <> pathUnnorm <> "/")
+              then redirect $ TL.pack ("/" <> pathUnnorm <> "/")
               else file path
 
       where pathForward staticDir pathUnnorm = do
@@ -97,14 +106,14 @@ isChild = \parent child -> go (splitPath parent) (splitPath child)
 
 
 
-postAnnotation :: FilePath -> ExceptT (Status, T.Text) ActionM ()
+postAnnotation :: FilePath -> ExceptT (Status, TL.Text) ActionM ()
 postAnnotation destDir = do
-    session' <- lift $ T.unpack `fmap` param "session"
+    session' <- lift $ TL.unpack `fmap` param "session"
     let session = escapeURIString isUnreserved session'
     when (null (session :: String)) $ throwE (status500, "expected session name")
     time <- liftIO getCurrentTime
     Just authorization <- lift $ header "Authorization"
-    let Just (username, _) = extractBasicAuth $ BS.pack $ T.unpack authorization
+    let Just (username, _) = extractBasicAuth $ BS.pack $ TL.unpack authorization
 
     let fname = destDir </> BS.unpack username <>"-"<>session<>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json"
     payload <- lift annotationData
