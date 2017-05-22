@@ -54,18 +54,22 @@ main = do
     createDirectoryIfMissing True destDir
     scotty port $ do
         mapM_ (middleware . flip basicAuth authSettings . checkCreds) credFile
-        post "/annotation" $ do
+        post "/annotation" $ do       -- case 1
+            liftIO $ putStrLn "case 1 put annotation"
             res <- runExceptT $ postAnnotation destDir
             case res of
                 Left (s, msg) -> text msg >> status s
                 Right ()      -> status ok200
-        get "/" $
+        get "/" $ do -- case 2
+            liftIO $ putStrLn "case 2 GET /"
             pathForward staticDir ""
-        get (regex "/(.+)/$") $ do
+        get (regex "/(.+)/$") $ do  -- case 3
            pathUnnorm <- param "1"
+           liftIO $ putStrLn $ "case 3 pathUnnorm = "<> pathUnnorm
            pathForward staticDir pathUnnorm
-        get (regex "/(.+)$") $ do
+        get (regex "/(.+)$") $ do  -- case 4
             pathUnnorm <- param "1"
+            liftIO $ putStrLn $ "case 4 pathUnnorm="<> pathUnnorm
             path <- liftIO $ canonicalizePath $ staticDir </> pathUnnorm
             unless (isChild staticDir path) $ status badRequest400
             isDir <- liftIO $ doesDirectoryExist path
