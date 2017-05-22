@@ -128,7 +128,7 @@ createDirListing :: FilePath -> [FilePath] -> H.Html
 createDirListing currentDir fileList = H.docTypeHtml $ do
     let fileLink filename =
             H.li $ H.a ! HA.href url $ H.toHtml filename
-          where url = H.stringValue $ escapeURIString isUnreserved filename
+          where url = H.stringValue filename -- do not escapeURIString -- the browser will insist to do it for you!
 
     H.head $ do
         H.meta ! HA.charset "utf-8"
