@@ -30,4 +30,5 @@ executable annotate-server
                        optparse-applicative >= 0.12,
                        network-uri,
                        blaze-html
+  ghc-options:         -threaded
   default-language:    Haskell2010
