@@ -58,14 +58,14 @@ main = do
     scotty port $ do
         mapM_ (middleware . flip basicAuth authSettings . checkCreds) credFile
         post "/annotation" $ do       -- case 1
-            liftIO $ putStrLn "case 1 put annotation"
+--             liftIO $ putStrLn "case 1 put annotation"
             res <- runExceptT $ postAnnotation destDir
             case res of
                 Left (s, msg) -> text msg >> status s
                 Right ()      -> status ok200
 
         get "/" $ do -- case 2
-            liftIO $ putStrLn "case 2 GET /"
+--             liftIO $ putStrLn "case 2 GET /"
             pathForward staticDir ""
 
         get (function $ \req -> let path = rawPathInfo req
@@ -73,12 +73,12 @@ main = do
                                    then Just []
                                    else Nothing) $ do
            pathUnnorm <- drop 1 . T.unpack . TE.decodeUtf8 . rawPathInfo <$> request
-           liftIO $ putStrLn $ "case 3 pathUnnorm = "<> pathUnnorm
+--            liftIO $ putStrLn $ "case 3 pathUnnorm = "<> pathUnnorm
            pathForward staticDir pathUnnorm
 
         get (function $ const $ Just []) $ do
             pathUnnorm <- drop 1 . T.unpack . TE.decodeUtf8 . rawPathInfo <$> request
-            liftIO $ putStrLn $ "case 4 pathUnnorm="<> pathUnnorm
+--             liftIO $ putStrLn $ "case 4 pathUnnorm="<> pathUnnorm
             path <- liftIO $ canonicalizePath $ staticDir </> pathUnnorm
             unless (isChild staticDir path) $ status badRequest400
             isDir <- liftIO $ doesDirectoryExist path
@@ -87,14 +87,18 @@ main = do
               then redirect $ TL.pack ("/" <> pathUnnorm <> "/")
               else file path
 
-      where pathForward staticDir pathUnnorm = do
+      where visibleFilePath :: FilePath -> Bool
+            visibleFilePath path = ext `notElem` ["css", "js"]
+              where ext = takeExtension path
+
+            pathForward staticDir pathUnnorm = do
                path <- liftIO $ canonicalizePath $ staticDir </> pathUnnorm
                existFile <- liftIO $ doesFileExist (path </> "index.html")
                if existFile then
                   file (path </> "index.html")
                else do
                   directoryContents <- liftIO $ getDirectoryContents path
-                  html $ H.renderHtml $ createDirListing pathUnnorm directoryContents
+                  html $ H.renderHtml $ createDirListing pathUnnorm $ filter visibleFilePath directoryContents
 -- | Determine whether one canonical path is a child of another.
 isChild :: FilePath -> FilePath -> Bool
 isChild = \parent child -> go (splitPath parent) (splitPath child)
