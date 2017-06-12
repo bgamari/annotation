@@ -88,7 +88,7 @@ main = do
               else file path
 
       where visibleFilePath :: FilePath -> Bool
-            visibleFilePath path = ext `notElem` ["css", "js"]
+            visibleFilePath path = ext `notElem` [".css", ".js"]
               where ext = takeExtension path
 
             pathForward staticDir pathUnnorm = do
