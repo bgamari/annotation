@@ -7,6 +7,7 @@ import Control.Monad (when, unless)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Except
+import Data.List (sort)
 import Data.Monoid
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as T
@@ -99,7 +100,8 @@ main = do
                   file (path </> "index.html")
                else do
                   directoryContents <- liftIO $ getDirectoryContents path
-                  html $ H.renderHtml $ createDirListing pathUnnorm $ filter visibleFilePath directoryContents
+                  html $ H.renderHtml $ createDirListing pathUnnorm
+                                      $ sort $ filter visibleFilePath directoryContents
 -- | Determine whether one canonical path is a child of another.
 isChild :: FilePath -> FilePath -> Bool
 isChild = \parent child -> go (splitPath parent) (splitPath child)
