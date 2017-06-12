@@ -88,6 +88,7 @@ main = do
               else file path
 
       where visibleFilePath :: FilePath -> Bool
+            visibleFilePath ('.':_) = False
             visibleFilePath path = ext `notElem` [".css", ".js"]
               where ext = takeExtension path
 
