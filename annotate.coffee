@@ -100,8 +100,10 @@ add_toolbar = ->
         })
     sess.change (ev) ->
         sessionStorage.setItem("session-name", $(this).val())
-    sess.val(sessionStorage.getItem("session-name"))
-    div.append sess
+    sessOld = sessionStorage.getItem("session-name")
+    sessOld = "NA" if not sessOld 
+    sess.val(sessOld )
+    div.append sess 
 
     export_btn = $("<button>Export</button>")
     div.append export_btn
