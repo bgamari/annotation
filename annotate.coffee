@@ -97,7 +97,10 @@ update_assessment_count = ->
              $('#assessment-count').text(req.result + ' assessments')
 
 add_toolbar = ->
+    container = $("<div>").attr('id', 'toolbar-container')
     div = $("<div>").attr('id', 'toolbar').addClass("toolbar")
+    container.append div
+
     status = $("<span>")
     div.append status
 
@@ -149,7 +152,7 @@ add_toolbar = ->
     assessment_count = $("<span>", {id: 'assessment-count'})
     div.append(assessment_count)
 
-    $("body").prepend div
+    $("body").prepend container
 
 generate_qrel = (on_done) ->
     objectStore = db.transaction([STORE_NAME], "readonly").objectStore(STORE_NAME)
