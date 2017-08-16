@@ -22,32 +22,32 @@ db = null
 annotations = {}
 
 parse_options = (str) ->
-    if str == undefined
-        #return [[['none', null]], [['not-relevant', 0], ['relevant', 1]]]
-        return [[['Perfect', 5], ['Must', 4], ['Should', 3], ['Can', 2]],
-                [['No', 0], ['<span class="glyphicon glyphicon-trash">', -2]],
-                [['<span class="glyphicon glyphicon-erase">', null]]]
+  if str == undefined
+    #return [[['none', null]], [['not-relevant', 0], ['relevant', 1]]]
+    return [[['Must', 5], ['Should', 4], ['Can', 3], ['Topic', 2]],
+    [['No', 0], ['<span class="glyphicon glyphicon-trash">', -2]],
+    [['<span class="glyphicon glyphicon-erase">', null]]]
 
     opts = {}
     for _,s in str.split(';')
-        group = []
-        for _,i in s.split(',')
-            [k,v] = s.split('=')
-            group.push([k,v])
+      group = []
+      for _,i in s.split(',')
+        [k,v] = s.split('=')
+        group.push([k,v])
     return opts
 
 
 set_annotation = (ev) ->
-    el = $(this)
-    ann_id = parseInt(el.closest('.annotate').attr("data-ann-id"))
-    val = el.attr("data-value")
-    toolbar = annotations[ann_id].toolbar
-    $("button", $(toolbar)).removeClass("active")
-    $("button[data-value=#{val}]", $(toolbar)).addClass("active")
+  el = $(this)
+  ann_id = parseInt(el.closest('.annotate').attr("data-ann-id"))
+  val = el.attr("data-value")
+  toolbar = annotations[ann_id].toolbar
+  $("button", $(toolbar)).removeClass("active")
+  $("button[data-value=#{val}]", $(toolbar)).addClass("active")
 
-    objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
-    if val == undefined
-        req = objectStore.delete(ann_id)
+  objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
+  if val == undefined
+    req = objectStore.delete(ann_id)
     else
         req = objectStore.put {
             ann_id: ann_id,
@@ -56,7 +56,9 @@ set_annotation = (ev) ->
             item: annotations[ann_id].item
         }
     req.onerror = (ev) -> console.log("Failed to set annotataion: "+req.error)
-    req.onsuccess = (ev) -> console.log("Set annotation "+ann_id+" to "+val)
+    req.onsuccess = (ev) ->
+        console.log("Set annotation "+ann_id+" to "+val)
+        update_assessment_count()
 
 add_annotations = ->
     $(".annotation").each (i) ->
@@ -88,9 +90,17 @@ add_annotations = ->
             toolbar: toolbar
         }
 
+update_assessment_count = ->
+    delay 10, () ->
+        req = db.transaction([STORE_NAME], "readonly").objectStore(STORE_NAME).count()
+        req.onsuccess = (ev) ->
+             $('#assessment-count').text(req.result + ' assessments')
 
 add_toolbar = ->
+    container = $("<div>").attr('id', 'toolbar-container')
     div = $("<div>").attr('id', 'toolbar').addClass("toolbar")
+    container.append div
+
     status = $("<span>")
     div.append status
 
@@ -101,9 +111,9 @@ add_toolbar = ->
     sess.change (ev) ->
         sessionStorage.setItem("session-name", $(this).val())
     sessOld = sessionStorage.getItem("session-name")
-    sessOld = "NA" if not sessOld 
+    sessOld = "NA" if not sessOld
     sess.val(sessOld )
-    div.append sess 
+    div.append sess
 
     export_btn = $("<button>Export</button>")
     div.append export_btn
@@ -135,11 +145,14 @@ add_toolbar = ->
         req.onsuccess = ->
             console.log("Clear successful")
             $(".annotation button").removeClass('active')
+            update_assessment_count()
         req.onerror = -> console.log("Clear failed: "+req.error)
-
     div.append clear_btn
 
-    $("body").prepend div
+    assessment_count = $("<span>", {id: 'assessment-count'})
+    div.append(assessment_count)
+
+    $("body").prepend container
 
 generate_qrel = (on_done) ->
     objectStore = db.transaction([STORE_NAME], "readonly").objectStore(STORE_NAME)
@@ -198,6 +211,7 @@ $(document).ready ->
     req.onsuccess = (ev) ->
         db = this.result
         load_existing_annotations()
+        update_assessment_count()
     req.onerror = (ev) ->
         notify("Failed to open annotations database: "+ev)
     req.onupgradeneeded = (ev) ->

@@ -1,3 +1,21 @@
+#toolbar-container {
+    position: fixed;
+    margin-left: auto;
+    margin-right: 0;
+    width: 100%;
+    z-index: 2;
+
+}
+
+#toolbar-container div {
+    margin-right: 49px;
+    float: right;
+    padding: 4px;
+    clear: both;
+    background-color: #fff;
+
+}
+
 .annotate .btn {
     border-color: #ccc;
     background-color: #fff;
