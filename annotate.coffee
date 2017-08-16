@@ -24,7 +24,7 @@ annotations = {}
 parse_options = (str) ->
     if str == undefined
         #return [[['none', null]], [['not-relevant', 0], ['relevant', 1]]]
-        return [[['Perfect', 5], ['Must', 4], ['Should', 3], ['Can', 2]],
+        return [[['Must', 5], ['Should', 4], ['Can', 3], ['Topic', 2]],
                 [['No', 0], ['<span class="glyphicon glyphicon-trash">', -2]],
                 [['<span class="glyphicon glyphicon-erase">', null]]]
 
