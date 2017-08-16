@@ -191,11 +191,15 @@ $(document).ready ->
     notifications = $('<ul id="notifications"></ul>')
     notifications = $("body").prepend notifications
 
+    if (!window.indexedDB)
+        notify("Your browser doesn't support IndexedDB. Please use a modern browser.", 'error')
+
     req = window.indexedDB.open(DB_NAME, 4)
     req.onsuccess = (ev) ->
         db = this.result
         load_existing_annotations()
-
+    req.onerror = (ev) ->
+        notify("Failed to open annotations database: "+ev)
     req.onupgradeneeded = (ev) ->
         db = ev.target.result
         db.createObjectStore(STORE_NAME, { keyPath: "ann_id" })
