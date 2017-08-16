@@ -38,16 +38,16 @@ parse_options = (str) ->
 
 
 set_annotation = (ev) ->
-  el = $(this)
-  ann_id = parseInt(el.closest('.annotate').attr("data-ann-id"))
-  val = el.attr("data-value")
-  toolbar = annotations[ann_id].toolbar
-  $("button", $(toolbar)).removeClass("active")
-  $("button[data-value=#{val}]", $(toolbar)).addClass("active")
+    el = $(this)
+    ann_id = parseInt(el.closest('.annotate').attr("data-ann-id"))
+    val = el.attr("data-value")
+    toolbar = annotations[ann_id].toolbar
+    $("button", $(toolbar)).removeClass("active")
+    $("button[data-value=#{val}]", $(toolbar)).addClass("active")
 
-  objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
-  if val == undefined
-    req = objectStore.delete(ann_id)
+    objectStore = db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME)
+    if val == undefined
+      req = objectStore.delete(ann_id)
     else
         req = objectStore.put {
             ann_id: ann_id,
