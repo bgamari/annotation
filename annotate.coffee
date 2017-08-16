@@ -56,7 +56,9 @@ set_annotation = (ev) ->
             item: annotations[ann_id].item
         }
     req.onerror = (ev) -> console.log("Failed to set annotataion: "+req.error)
-    req.onsuccess = (ev) -> console.log("Set annotation "+ann_id+" to "+val)
+    req.onsuccess = (ev) ->
+        console.log("Set annotation "+ann_id+" to "+val)
+        update_assessment_count()
 
 add_annotations = ->
     $(".annotation").each (i) ->
@@ -88,6 +90,11 @@ add_annotations = ->
             toolbar: toolbar
         }
 
+update_assessment_count = ->
+    delay 10, () ->
+        req = db.transaction([STORE_NAME], "readonly").objectStore(STORE_NAME).count()
+        req.onsuccess = (ev) ->
+             $('#assessment-count').text(req.result + ' assessments')
 
 add_toolbar = ->
     div = $("<div>").attr('id', 'toolbar').addClass("toolbar")
@@ -101,9 +108,9 @@ add_toolbar = ->
     sess.change (ev) ->
         sessionStorage.setItem("session-name", $(this).val())
     sessOld = sessionStorage.getItem("session-name")
-    sessOld = "NA" if not sessOld 
+    sessOld = "NA" if not sessOld
     sess.val(sessOld )
-    div.append sess 
+    div.append sess
 
     export_btn = $("<button>Export</button>")
     div.append export_btn
@@ -135,9 +142,12 @@ add_toolbar = ->
         req.onsuccess = ->
             console.log("Clear successful")
             $(".annotation button").removeClass('active')
+            update_assessment_count()
         req.onerror = -> console.log("Clear failed: "+req.error)
-
     div.append clear_btn
+
+    assessment_count = $("<span>", {id: 'assessment-count'})
+    div.append(assessment_count)
 
     $("body").prepend div
 
@@ -195,6 +205,7 @@ $(document).ready ->
     req.onsuccess = (ev) ->
         db = this.result
         load_existing_annotations()
+        update_assessment_count()
 
     req.onupgradeneeded = (ev) ->
         db = ev.target.result
