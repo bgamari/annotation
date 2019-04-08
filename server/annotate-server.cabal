@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 executable annotate-server
   main-is:             Main.hs
   other-extensions:    OverloadedStrings
-  build-depends:       base >=4.8 && <4.13,
+  build-depends:       base >=4.8,
                        time >=1.5 && <1.10,
                        transformers >=0.5 && <0.6,
                        aeson >=0.8 && <1.5,

@@ -24,6 +24,7 @@ import System.Directory
 import System.FilePath
 import System.Directory
 import Options.Applicative hiding (header)
+import Debug.Trace as Debug
 
 import qualified Text.Blaze.Html.Renderer.Text as H
 import qualified Text.Blaze.Html5 as H
@@ -59,8 +60,13 @@ main = do
     scotty port $ do
         mapM_ (middleware . flip basicAuth authSettings . checkCreds) credFile
         post "/annotation" $ do       -- case 1
---             liftIO $ putStrLn "case 1 put annotation"
             res <- runExceptT $ postAnnotation destDir
+            case res of
+                Left (s, msg) -> text msg >> status s
+                Right ()      -> status ok200
+
+        post "/assessment" $ do       -- case 1
+            res <- runExceptT $ postAnnotation2 destDir
             case res of
                 Left (s, msg) -> text msg >> status s
                 Right ()      -> status ok200
@@ -126,9 +132,26 @@ postAnnotation destDir = do
     payload <- lift annotationData
     liftIO $ BSL.writeFile fname payload
     return ()
+  where
+    annotationData :: ActionM BSL.ByteString
+    annotationData = param "qrel"
 
-annotationData :: ActionM BSL.ByteString
-annotationData = param "qrel"
+
+
+postAnnotation2 :: FilePath -> ExceptT (Status, TL.Text) ActionM ()
+postAnnotation2 destDir = do
+    time <- liftIO getCurrentTime
+    Just authorization <- lift $ header "Authorization"
+    let Just (username, _) = extractBasicAuth $ BS.pack $ TL.unpack authorization
+
+    let fname = destDir </> BS.unpack username <>"-"<>formatTime defaultTimeLocale "%F-%H%M" time<>".json"
+
+    payload <- lift $ jsonData
+    let !x = Debug.traceShow (payload :: Aeson.Value) $ 1
+
+
+    liftIO $ BSL.writeFile fname $ Aeson.encode payload
+    return ()
 
 
 createDirListing :: FilePath -> [FilePath] -> H.Html
