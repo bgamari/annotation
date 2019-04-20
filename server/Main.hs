@@ -72,6 +72,12 @@ main = do
                 Left (s, msg) -> text msg >> status s
                 Right ()      -> status ok200
 
+        get "/username" $ do
+            res <- runExceptT $ authUsername
+            case res of
+                Left (s, msg)    -> text msg >> status s
+                Right (username) -> text (TL.pack $ BS.unpack username) >> status ok200
+
         get "/" $ do -- case 2
 --             liftIO $ putStrLn "case 2 GET /"
             pathForward staticDir ""
@@ -169,3 +175,8 @@ createDirListing currentDir fileList = H.docTypeHtml $ do
         H.ul $
           mapM_ fileLink fileList
 
+authUsername :: ExceptT (Status, TL.Text) ActionM (BS.ByteString)
+authUsername =  do
+    Just authorization <- lift $ header "Authorization"
+    let Just (username, _) = extractBasicAuth $ BS.pack $ TL.unpack authorization
+    return username
