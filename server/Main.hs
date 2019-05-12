@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 import Data.Time.Clock
 import Data.Time.Format
@@ -26,6 +28,11 @@ import System.FilePath
 import System.Directory
 import Options.Applicative hiding (header)
 import Debug.Trace as Debug
+
+
+import qualified Data.Text.Lazy.Encoding
+import Data.Aeson
+import GHC.Generics
 
 import qualified Text.Blaze.Html.Renderer.Text as H
 import qualified Text.Blaze.Html5 as H
@@ -78,6 +85,15 @@ main = do
                 Left (s, msg)    -> text msg >> status s
                 Right (username) -> text (TL.pack $ BS.unpack username) >> status ok200
 
+        get "/list" $ do
+            path <- liftIO $ canonicalizePath $ staticDir </> "data"
+            fileList <- liftIO $ getDirectoryContents path
+            res <- runExceptT $ createDirJson staticDir fileList
+
+            case res of
+                Left (s, msg)    -> text msg >> status s
+                Right (res)      -> text (decodeByteString res) >> status ok200
+
         get "/" $ do -- case 2
 --             liftIO $ putStrLn "case 2 GET /"
             pathForward staticDir ""
@@ -124,6 +140,8 @@ isChild = \parent child -> go (splitPath parent) (splitPath child)
     go [] _  = True
     go _  _  = False
 
+decodeByteString :: BSL.ByteString -> TL.Text
+decodeByteString = Data.Text.Lazy.Encoding.decodeUtf8
 
 
 postAnnotation :: FilePath -> ExceptT (Status, TL.Text) ActionM ()
@@ -175,8 +193,22 @@ createDirListing currentDir fileList = H.docTypeHtml $ do
         H.ul $
           mapM_ fileLink fileList
 
+createDirJson :: FilePath -> [FilePath] -> ExceptT (Status, TL.Text) ActionM (BSL.ByteString)
+createDirJson currentDir fileList = do
+    let lst = FileListing { pathname = T.pack currentDir
+                      , filenames = fmap T.pack fileList
+                      }
+    return $ Aeson.encode lst
+
 authUsername :: ExceptT (Status, TL.Text) ActionM (BS.ByteString)
 authUsername =  do
     Just authorization <- lift $ header "Authorization"
     let Just (username, _) = extractBasicAuth $ BS.pack $ TL.unpack authorization
     return username
+
+
+data FileListing = FileListing {
+        filenames :: [T.Text]
+       , pathname :: T.Text
+    }
+  deriving (Eq, FromJSON, ToJSON, Generic, Show)
