@@ -195,10 +195,15 @@ createDirListing currentDir fileList = H.docTypeHtml $ do
 
 createDirJson :: FilePath -> [FilePath] -> ExceptT (Status, TL.Text) ActionM (BSL.ByteString)
 createDirJson currentDir fileList = do
-    let lst = FileListing { pathname = T.pack currentDir
-                      , filenames = fmap T.pack fileList
+    let fileList' = sort $ filter isJson fileList
+        lst = FileListing { pathname = T.pack currentDir
+                      , filenames = fmap T.pack fileList'
                       }
     return $ Aeson.encode lst
+  where isJson :: FilePath -> Bool
+        isJson ('.':_) = False
+        isJson path =
+            ".json" == takeExtension path
 
 authUsername :: ExceptT (Status, TL.Text) ActionM (BS.ByteString)
 authUsername =  do
