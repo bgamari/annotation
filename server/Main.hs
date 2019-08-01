@@ -94,6 +94,15 @@ main = do
                 Left (s, msg)    -> text msg >> status s
                 Right (res)      -> text (decodeByteString res) >> status ok200
 
+        get "/list-l" $ do
+            path <- liftIO $ canonicalizePath $ staticDir </> "data"
+            fileList <- liftIO $ getDirectoryContents path
+            res <- runExceptT $ createDirJsonL staticDir fileList
+
+            case res of
+                Left (s, msg)    -> text msg >> status s
+                Right (res)      -> text (decodeByteString res) >> status ok200
+
         get "/" $ do -- case 2
 --             liftIO $ putStrLn "case 2 GET /"
             pathForward staticDir ""
@@ -204,6 +213,18 @@ createDirJson currentDir fileList = do
         isJson ('.':_) = False
         isJson path =
             ".json" == takeExtension path
+
+createDirJsonL :: FilePath -> [FilePath] -> ExceptT (Status, TL.Text) ActionM (BSL.ByteString)
+createDirJsonL currentDir fileList = do
+    let fileList' = sort $ filter isJsonL fileList
+        lst = FileListing { pathname = T.pack currentDir
+                      , filenames = fmap T.pack fileList'
+                      }
+    return $ Aeson.encode lst
+  where isJsonL :: FilePath -> Bool
+        isJsonL ('.':_) = False
+        isJsonL path =
+            ".jsonl" == takeExtension path
 
 authUsername :: ExceptT (Status, TL.Text) ActionM (BS.ByteString)
 authUsername =  do
